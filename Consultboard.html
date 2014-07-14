@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta  charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+	<title>현황판</title>
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<style>
+    body{background: #394264; padding: 8px; min-height: 668px;}
+    #WrapX{overflow: hidden; /*width: 988px;*/ height: 668px; margin: 0 auto; position: relative; }
+    .wkit-trast{position: relative; width: 100%; }
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script src="js/jquery.tmpl.min.js"></script>
+<script defer src="js/jquery.touchslider.min.js"></script>
+<script src="js/iscroll.js"></script>
+<script src="js/lib.js"></script>
+<script id="statusTypeTmpl" type="text/x-jquery-tmpl">
+<li custID="${CUSTOMERID}">
+    <span class="time schtime fl_L">{{if SCHEDULESTATUS < 5}}${SCHEDULETIME}{{/if}}</span>
+    <span class="fl_L"><img src="${THUMBNAIL}" width="50" height="62" alt=""></span>
+    <div class="WrapSum fl_L">
+        <p class="summary1">
+            <span class="custno">${CUSTNO}</span><span class="custname">${CUSTNAME}</span>(<span class="gender">${CUSTGENDER}</span>/<span class="age">${CUSTDOB}</span>)
+            <span class="btn_chart" scheduleID=${SCHEDULEID}><img src="img/btn_chart.png" alt=""></span>
+        </p>
+        <p class="summary2">
+            <span class="schtime">{{if SCHEDULESTATUS < 5}}${RESVTIME}{{else}}${SCHEDULETIME}{{/if}}</span> <span class="visitType">${VISITTYPE}</span>{{if SVCAREA!='' && VISITTYPE!=''}}/{{/if}}<span class="svcarea">${SVCAREA}</span>{{if SVCAREA!='' && VISITTYPE!='' && CONDITION1!=''}}/{{/if}}<span class="condition1">${CONDITION1}</span></p>
+        {{if SCHEDULESTATUS < 5}}<p class="summary3"><span class="phone">{{if CUSTCELL1 != ""}}${CUSTCELL1}{{else}}${CUSTPHONE1}{{/if}}</span> / ${CUSTMEMO}</p>{{/if}}
+        {{if SCHEDULESTATUS == 5}}
+        <div class="charge">
+          <span class="red" style="margin-right:10px;">오늘: <span class="comma">${ORDERAMT}</span></span>
+          <span class="blue" style="margin-right:10px;">수납: <span class="comma">${PAYMENTAMT}</span></span>
+          <span class="red">미수: <span class="comma">${UNPAIDAMT}</span></span>
+        </div>
+        {{/if}}
+    </div>    
+    <span class="drname scheduledr fl_R">${SCHDOCTOR}</span>
+</li>    
+</script>
+</head>
+<body>
+<div id="WrapX" class="swiper-container clearfix">
+   <!-- container -->
+    <ul id="ConWrap" class=""> <!-- wrap -->
+      <li id="Appoint" class="swiper-slide">
+        <div class="title">
+          <h2>예약<span class="count">( <span class="num">3</span>명 )</span></h2>
+        </div>
+        <ul class="List status1" id="Wrap1">
+        </ul>
+      </li>
+      <li id="Checkin" class="swiper-slide">
+        <div class="title">
+          <h2>접수<span class="count">( <span class="num">3</span>명 )</span></h2>
+          <span class="box fl_R"><span class="colorbox"></span>상담중</span> 
+        </div>
+        <ul class="List status2" id="Wrap2">
+        </ul>
+      </li>
+      <li id="Payment" class="swiper-slide">
+        <div class="title">
+          <h2>수납<span class="count">( <span class="num">3</span>명 )</span></h2>
+        </div>
+        <ul class="List status3" id="Wrap3">
+        </ul>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>
+<script>
+	var serverUrl =  "http://int.trustnhope.com:3114/inbody/";
+	var serverImg =  "http://int.trustnhope.com:3112",
+		doctorList,
+		cc04,
+		cc05,
+		cc06;
+$(function(){
+    loadConsultboard(true);
+    loaded();
+});
+
+function loadConsultboard(init) {
+    var url = serverUrl + "CustomerStatusBoard.json?srDate=",
+          param = getUrlParams(),
+          srDate;
+
+          param.srDate !== undefined ? srDate = param.srDate : srDate = getCalDate();
+
+    $.ajax({
+        url: url  + srDate,
+        type: "POST",
+        dataType: "jsonp",
+        jsonp: "callback",
+        timeout: 15000,
+          crossDomain:true,
+          cache:false,
+        success: function (jsonData) {
+            var data = jsonData.object;
+            for (var i = 0; i < data.scheduleList.length; i++) {
+            	switch(data.scheduleList[i].SCHEDULESTATUS){            		
+            	   case 1 :
+                  $("#statusTypeTmpl").tmpl(data.scheduleList[i]).appendTo(".status1");
+            	   break;
+            	   case 2 :
+                  $("#statusTypeTmpl").tmpl(data.scheduleList[i]).appendTo(".status2");
+            	   break;
+            	   default :
+                  $("#statusTypeTmpl").tmpl(data.scheduleList[i]).appendTo(".status3");
+            	   break;
+            	}
+            };
+      $('#Appoint .num').text($('.status1 li').length);
+      $('#Checkin .num').text($('.status2 li').length);
+      $('#Payment .num').text($('.status3 li').length);
+	    		
+       doctorList = JSON.parse(data.configList.doctorList);
+       cc04 = JSON.parse(data.configList.cc04);
+       cc05 = JSON.parse(data.configList.cc05);
+       cc06 = JSON.parse(data.configList.cc06);
+	formatList('.List li');
+      EventChart();
+
+            // if(init) {
+            //     parent.loadMask(false); 
+            //     parent.loadMask(false, true);
+            // }
+        },
+        error: function (xhr, option, error) {
+            if(init) {
+                // parent.loadMask(false, true);
+                location.href = "index.html";
+            }
+            showMessage(ajaxRequestErrorMessage(xhr.status));
+        }       
+    });
+
+}
+
+function formatList(wrap)
+{
+	$(".phone", wrap).each(function() {
+		$(this).text(format_phone($(this).text()));
+	});
+	$(".gender", wrap).each(function() {
+		$(this).text(format_gender($(this).text()));
+	});
+	$(".resvtime", wrap).each(function() {
+		$(this).text(format_time($(this).text()));
+	});
+	$(".schtime", wrap).each(function() {
+		$(this).text(format_time($(this).text()));
+	});
+	$(".age", wrap).each(function() {
+		$(this).text(format_dobAge($(this).text()));
+	});
+	$("#date", wrap).each(function() {
+		$(this).text(format_date($(this).text(), "yyyy. MM. dd. (ddd요일)"));
+	});
+	$(".visitType", wrap).each(function() {
+		$(this).text(getCodeByName(cc04, "CODE", "CONFIG", $(this).text()));
+	});
+	$(".svcarea", wrap).each(function() {
+		$(this).text(getCodeByName(cc05, "CODE", "CONFIG", $(this).text()));
+	});
+	$(".condition1", wrap).each(function() {
+		$(this).text(getCodeByName(cc06, "CODE", "CONFIG", $(this).text()));
+	});
+	$(".scheduledr", wrap).each(function() {
+		$(this).text(getCodeByName(doctorList, "EMPLOYEEID", "EMPLNAME", $(this).text()));
+	});
+
+	$(".comma", wrap).each(function() {
+		$(this).text(commify($(this).text()));
+	});	
+}
+
+function EventChart (){
+  $('.swiper-slide ul.List li').off().on('click',function(){
+    var custID = $(this).attr('custID');
+    top.wrapLeftShow(custID);
+  });
+}
+
+function loaded()
+{
+  iscroll = new iScroll('WrapX', {
+    snap: true,
+    momentum: false,
+    vScroll: false,
+    hScrollbar: false,
+    vScrollbar: false,
+    onScrollEnd: function () {
+    }   
+  });
+
+  // iscrollHelp = new iScroll('wrapperHelp', { hScroll: false, vScrollbar: false });
+  // iscrollDate = new iScroll('wrapperDate', { hScroll: false, vScrollbar: false });
+}
+document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+
+</script>

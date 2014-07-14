@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta  charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+    <title>현황판</title>
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<link rel="stylesheet" href="css/fancySelect.css">
+<style>
+    body{font: 12px/1 'Dotum'; width: 1024px; height: 735px; position: relative; }
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+<script type="text/javascript" src="js/date.format.js"></script>
+<script src="js/iscroll.js"></script>
+<script src="js/fancySelect.js"></script>
+<script src="js/calendar_resv.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/main.js"></script>
+<script id="ResultTmpl" type="text/x-jquery-tmpl">
+<li class="ApList" custID="${CUSTOMERID}" scheduleID="${SCHEDULEID}">            
+<div class="Appointbox clearfix">
+    <span>예약 : </span>
+        <input type="date" name="checkdate" id="checkdate" value="" /> 
+        <select name="resvHour" id=""></select> <span>시</span> 
+        <select name="resvMin" id=""></select><span>분</span>
+</div>
+<div class="AppointList fl_L">
+    <span class="fl_L"><img src="${CUSTPIC75}" width="79" height="104" alt=""></span>
+    <p class="summary summaryText">${CUSTNAME}</p>
+    <p class="summary summaryText">${CUSTADDR11}</p>
+    <p class="summary summaryText">${CUSTADDR12}</p>
+    <p class="summary summaryText"><span class="phone">${CUSTCELL1}</span></p>
+    <p class="summary">
+     <select name="SCHDOCTOR" style="width: 187px;" id=""><option value="">진료의선택</option><option value="0">미지정</option>
+     </select>
+    </p>
+    <p class="summary">
+        <select name="SVCAREA" id=""><option value="">진료분야선택</option><option value="0">미지정</option></select>
+        <select name="VISITTYPE" id=""><option value="">진료구분선택</option><option value="0">미지정</option></select>
+    </p>
+    <p class="summary">
+        <select name="CONDITION1" id="CONDITION1"><option value="">시술선택</option><option value="0">미지정</option></select>
+        <input name="RESVCOUNT" placeholder="ex) 2-2" value="${RESVCOUNT}" />
+    </p>
+    <textarea name="RESVMEMO" id="" cols="30" rows="10">${RESVMEMO}</textarea>
+    <textarea name="NURSEMEMO" id="" cols="30" rows="10">${NURSEMEMO}</textarea>
+    <textarea name="HISTMEMO" id="" cols="30" rows="10" placeholder="예약취소 / 변경내역">${HISTMEMO}</textarea>
+    <p class="summary">
+        <select name="SCHNURSE" id=""><option value="">직원선택</option><option value="0">미지정</option></select>
+        <select name="RESVEMPLID" id=""><option value="">직원선택</option><option value="0">미지정</option></select>
+    </p>
+    <span id="RESVCFM" class="btn_appoint btn_active">즉시발송</span>               
+    <span id="RESVTMO" class="btn_appoint btn_active">전일발송</span>               
+    <span id="RESVTDY" class="btn_appoint btn_active">당일발송</span>
+    <div class="btn_appSave btResvModify btn_app"><span>예약변경</span></div>
+    <div class="btn_appCancel btResvCancel btn_app"><span>예약취소</span></div>     
+    <!-- <div class="btn_appCom"><span>예약확인</span></div>                           -->
+</div>    
+</li>
+</script>
+<script id="CustomerListTmpl" type="text/x-jquery-tmpl">
+  <li class="format custID_${CUSTOMERID}" custID="${CUSTOMERID}">
+    <span class="fl_L"><img src="img/emptyPic.png" alt=""></span>
+    <div class="WrapSum fl_L">
+    <p class="summary1">${CUSTNAME} (<span class="gender">${CUSTGENDER}</span>/<span class="age">${CUSTJN}</span>) <span class="recent">${CUSTLSTDATE}</span></p>
+    <p class="summary2"><span class="svcarea">${CUSTSVCAREA}</span>/<span class="drname">${CUSTDRID}</span></p>
+    <p class="summary3"><span class="phone">{{if CUSTCELL1 != ""}}${CUSTCELL1}{{else}}${CUSTPHONE1}{{/if}}</span></p>
+    </div>    
+  </li>
+</script>
+<script id="DetailListTmpl" type="text/x-jquery-tmpl">
+<li class="detail">
+    <table class="patient_info">
+        <tr><th>이름</th><td>${CUSTNAME} (<span class="gender">${CUSTGENDER}</span>/<span class="age">${CUSTJN}</span>)</td></tr>
+        <tr><th>진료분야/진료의</th><td><span class="svcarea">${CUSTSVCAREA}</span>/ <span class="drname">${CUSTDRID}</span></td></tr>
+        <tr><th>핸드폰</th><td><span class="phone">${CUSTCELL1}</span></td></tr>
+        <tr><th>주민번호</th><td><span class="jn">${CUSTJN}</span></td></tr>
+        <tr><th>핸드폰2</th><td><span class="phone">${CUSTCELL2}</span></td></tr>
+        <tr><th>전화번호1</th><td><span class="phone">${CUSTPHONE1}</span></td></tr>
+        <tr><th>전화번호2</th><td><span class="phone">${CUSTPHONE2}</span></td></tr>
+        <tr><th>주소1</th><td><span class="addr">${CUSTADDR11}</span></td></tr>
+        <tr><th>주소2</th><td>${CUSTADDR12}</td></tr>
+        <tr><th>담당의사</th><td><span class="drname">${SCHDOCTOR}</span></td></tr>
+        <tr><th>담당직원</th><td><span class="empl">${SCHNURSE}</span></td></tr>
+        <tr><th>최초내원일</th><td><span class="recent">${CUSTLSTDATE}</span></td></tr>
+    </table>
+</li>
+</script>
+</head>
+<body>
+    <div id="Wrap">
+        <div id="header" class="clearfix">
+            <a href="main.html"><div id="logo" class="fl_L"><img src="img/logo.png" /></div></a>
+            <div class="date fl_L Today">2014. 04. 04 (목요일)</div>
+            <input type="hidden" name="hiddenDate" value="" />
+            <input type="date" name="datepicker" value="" />
+            <div class="btnToday fl_L"><span class="moveTo"><img src="img/btn_Today.png" alt=""></span></div>            
+            <ul class="menuTab clearfix">
+                <li class="menu1" data-url="Consultboard.html"><!-- <img src="img/menu1.png" /> --><!-- 현황판 --></li>
+                <li class="menu2" data-url="reservation.html"><!-- <img src="img/menu2.png" /> --><!-- 예약노트 --></li>
+                <li class="menu3" data-url="report.html"><!-- <img src="img/menu3.png" /> --><!-- 매출집계 --></li>
+            </ul>
+        </div>
+        <div id="ApMenu" style="display:none;">
+            <span class="ebox"></span>
+            <ul>
+                <li data-tab='0' class="subMenu_active">예약내역</li>
+                <li data-tab='1'>Progress Note</li>
+                <li data-tab='2'>주소증</li>
+                <li data-tab='3'>메모</li>
+                <li data-tab='4'>기타</li>
+            </ul>
+        </div>
+
+    <!-- <div id="Contents" class="clearfix"></div> -->
+<div class="wrap_left fl_L">
+            <div class="searchbox"><div class="innerbox"><input type="text" name="searchbox" placeholder="이름, 차트번호, 핸드폰 검색"></div>
+            <span class="btn_search"></span></div>
+            <div id="left_contents"><div id="calendarLayer"></div>
+                <div class="result"> 
+                <div class="resultbox clearfix"><img src="img/eyefind.png" class="eyefind fl_L" alt="">
+                <p class="fl_L"><span class="keyword"></span>(으)로 <span class="cst"></span>명 <span class="txt1">검색</span></p> <img src="img/btn_result.png" class="fl_R" alt=""></div>
+                <ul class="resultList">
+                </ul>
+                <div class="TempPatient">
+                <input type="text" name="tempName" value="" maxlength="10" placeholder="이름" class="tempname">
+                <div class="tempcellphone">
+                    <select name="tempPhone1" style="width:70px;">
+                        <option value="010" selected>010</option>
+                        <option value="010">010</option>
+                        <option value="011">011</option>
+                        <option value="016">016</option>
+                        <option value="017">017</option>
+                        <option value="018">018</option>
+                        <option value="019">019</option>
+                        <option value="070">070</option>
+                    </select> - <input type="text" name="tempPhone2" value="" maxlength="4"> - <input type="text" id="tempPhone13" name="tempPhone3" value="" maxlength="4">
+                    <div class="tempPatientSave btn_customer hand">
+                    <span>저장</span>
+                    </div>
+                </div>
+                </div>                
+                </div>
+            </div>
+        </div>    
+      <iframe id="Contents" name="mainFrame" width="1006" height="680" frameborder="0" scrolling="no" style="z-index:2;" src="Consultboard.html"></iframe>
+      <!-- <div id="Contents"></div> -->
+    </div>
+<div id="subMenu" style="display:none;">
+<ul>
+    <li class="datepick notSelect"><span class="btn_prev"></span><span class="selectdate">2013.12.15 (일요일)</span><span class="btn_next"></span><input type="hidden" name="Today" value="" /></li>
+    <li class="subMenu_active" data-link="report.html">일간</li>
+    <li data-link="Wreport.html">주간</li>
+    <li data-link="Mreport.html">월간</li>
+    <li data-link="Yreport.html">연간</li>
+</ul>
+</div>
+</body>
+</html>

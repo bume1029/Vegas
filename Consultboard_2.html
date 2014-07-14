@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" name='viewport' content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <title>현황판</title>
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<style>
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+<script src="js/lib.js"></script>
+<script id="noticeTmpl" type="text/x-jquery-tmpl">
+<li class="messageID_${MESSAGEID}" messageID="${MESSAGEID}" userID="${USERID}">
+  <div class="noticeWrap">
+    <h3 class="username">${EMPLNAME}</h3>
+    <span class="btn_dele fl_R"><img src="img/btn_delete.png" alt="" class="noteClose hand"></span>
+    <textarea class="active" name="" id="" cols="30" rows="10" value="">${CHATMESSAGE}</textarea>    
+  </div>
+</li>
+</script>
+</head>
+<body>
+    <div id="Notice" class="fl_L clearfix">
+            <div class="title">
+                <h2>공지사항</h2>
+            </div>
+            <ul class="notice_list">
+                <!-- <li><h3>김헌석</h3>
+                    <span class="btn_dele fl_R"><img src="img/btn_delete.png" alt=""></span>
+                    <textarea class="active" name="" id="" cols="30" rows="10" value="">감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사감사</textarea>
+                </li> -->
+            </ul>
+            <textarea name="insertArea" id="" placeholder="공지할 내용을 입력하세요." cols="30" rows="10"></textarea>
+            <img src="img/btn_save.png" alt="" class="noticeSave">
+            <img src="img/btn_cancel.png" alt="" class="noticeCancel">
+    </div>
+</body>
+</html> 
+<script>
+
+var serverUrl =  "http://int.trustnhope.com:3114/inbody/";
+
+$(function() {
+    LoadNotice();
+
+    $('.noticeSave').on('click',function(){
+
+        var Notice = {
+            NOTICEDATE: parent.$('.input[name=hiddenDate'].val(), 
+            CHATMESSAGE: $("textarea[name=insertArea]").val(), 
+            MSGTYPE:0
+        };
+
+
+        var url = "NoticeSave.json?notice=" + JSON.stringify(Notice);
+
+       $.ajax({
+        url: serverUrl + url,
+        type: "POST",
+        dataType: "jsonp",
+        jsonp: "callback",
+        timeout: 15000,
+          crossDomain:true,
+          cache:false,
+        success: function (jsonData) {
+            var data = jsonData.object;
+            $("#noticeTmpl").tmpl(data).appendTo(".notice_list");
+            DeleteNotice();
+            $("textarea[name=insertArea]").val('');
+        },
+        error: function (xhr, option, error) {
+            if(init) {
+                // parent.loadMask(false, true);
+                location.href = "index.html";
+            }
+            showMessage(ajaxRequestErrorMessage(xhr.status));
+        }       
+       });
+    });
+    $('.noticeCancel').on('click',function(){
+      $('textarea').val('');
+    });
+
+
+});
+
+function LoadNotice(){
+        var url = "GetNoticeList.json";
+
+       $.ajax({
+        url: serverUrl + url,
+        type: "POST",
+        dataType: "jsonp",
+        jsonp: "callback",
+        timeout: 15000,
+          crossDomain:true,
+          cache:false,
+        success: function (jsonData) {
+            var data = jsonData.object;
+            for (var i = 0; i < data.length; i++) {
+                $("#noticeTmpl").tmpl(data[i]).appendTo(".notice_list");
+            };
+            DeleteNotice();
+        },
+        error: function (xhr, option, error) {
+            if(init) {
+                // parent.loadMask(false, true);
+                location.href = "index.html";
+            }
+            showMessage(ajaxRequestErrorMessage(xhr.status));
+        }       
+       });
+    
+}
+
+function DeleteNotice(){
+        $('.noteClose').off().on('click',function(){
+            var messageID = $(this).parents('li').attr('messageID'),
+                  url = "NoticeDelete.json?messageID=" + messageID;
+           $.ajax({
+            url: serverUrl + url,
+            type: "POST",
+            dataType: "jsonp",
+            jsonp: "callback",
+            timeout: 15000,
+              crossDomain:true,
+              cache:false,
+            success: function (jsonData) {
+                if(jsonData.result === 'success'){
+                  $('.messageID_' + messageID).remove();
+                } 
+            },
+            error: function (xhr, option, error) {
+                if(init) {
+                    // parent.loadMask(false, true);
+                    location.href = "index.html";
+                }
+                showMessage(ajaxRequestErrorMessage(xhr.status));
+            }       
+           });
+        });
+};
+</script>  

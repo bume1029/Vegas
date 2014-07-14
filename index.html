@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta  charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>로그인</title>
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<link rel="stylesheet" href="css/index.css">
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/login.js"></script>
+</head>
+<body>
+    <div id="Wrap">
+    <img src="img/logo.png" class='logo' />
+     <form id="form1">
+      <div class="setupbtn"></div>
+      <div class="idbox"><input type="text" name="userID" class="logininput"></div>
+      <div class="pwbox"><input type="password" name="passwd" class="logininput"></div>
+      <div class="btnlogin"></div>
+      <div id="glayLayer"></div>
+      <div id="SetupLayer">
+        <div class="title">설정</div>
+        <div class="selectServer">
+          서비스 프로그램 : &nbsp; 
+           <span class="radioBlock" val="vegas">베가스솔루션</span>
+        </div>        
+        <div id="setVegas">
+          <div class="setupText">요양기관기호를 입력하세요.</div>
+          <div class="addrbox"><input type="text" name="hospitalID" value="" class="IpAddr"></div>
+        </div>
+        <div class="savebtn"><span>확 인</span></div>
+      </div>
+      <div class="setupbtn1"></div>
+    </form>   
+</div>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8" name='viewport' content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <title>chart</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<style>
+    body{background: #394264; padding: 8px; min-height: 668px;}
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+<script type="text/javascript" src="js/date.format.js"></script>
+<script src="js/lib.js"></script>
+<script id="ApHisListTmpl" type="text/x-jquery-tmpl">
+<tr>
+    <td class="text_center">2013-12-07(토)</td>
+    <td class="text_center">오후 05:55</td>
+    <td class="text_center">비만체형</td>
+    <td class="text_center">10/01</td>
+    <td>불만많음.</td>
+</tr>
+</script>
+<script id="MemoListTmpl" type="text/x-jquery-tmpl">
+<tr class="memotype${MEMOTYPE}" memoID="${MEMOID}">
+    <th><p><span class="date">${MEMODATE}</span></p>
+    <p><img src="img/icon_memotype${MEMOTYPE}.png" / class="icon_memo"></p></th>
+    <td><p>${MEMO}</p></td>
+</tr>    
+</script>
+<script id="AddressListTmpl" type="text/x-jquery-tmpl">
+<tr>
+    <th><p><span class="date">${MEMODATE}</span></p></th>
+    <td><p>${MEMO}</p></td>
+</tr>
+</script>
+<script id="ProgressNoteTmpl" type="text/x-jquery-tmpl">
+<tr class="pgList">
+    <th><p><span class="date">${CONSULTTIME.substr(0,8)}</span><span class="drname">${SCHDOCTOR}</span></p></th>
+    <td>
+           <p><span class="progressNote">${PROGRESSNOTE}</span></p>
+            <ul class="detail">
+                <li>
+                <span class="consultNote">${CONSULTNOTE}</span>
+                </li>
+{{if DISEASELIST}}
+              <li>
+                  {{each DISEASELIST}}
+                      ${this.DISEASENAME}(${DISEASECODE})
+                  {{/each}}
+              </li>
+{{/if}}
+
+{{if SALESITEMS}}
+              <li>
+                    {{each SALESITEMS}} 
+                       ${this.ITEMNAME}  ${this.DAILYDOSE} / ${this.DAILYAPP} / ${this.NODAYS}
+                    {{/each}}
+              </li>
+{{/if}}
+                <li class="progliAmt amt">본부금 : <span class="comma">${LIABILITYAMT}</span> / 비급여 : <span class="comma">${NONINSAMT}</span> / <span>합계액 : <span class="comma">${ORDERAMT}</span> / (DC<span class="comma">${DISCOUNTAMT}</span>) / 수납액 : <span class="comma">${PAYMENTAMT}</span></li>
+            </ul>
+    </td>
+</tr>
+</script>
+<script id="EtcListTmpl" type="text/x-jquery-tmpl">
+  <li><p>${MEMO}</p></li>
+</script>
+<script id="listTmpl" type="text/x-jquery-tmpl">
+<tr scheduleID="${SCHEDULEID}" schDate="${RESVDATE}" class="format ChartHis {{if SCHEDULESTATUS == 0}}reservecancel{{/if}}">
+    <td width="100" class="text_center date">${RESVDATE}</td>
+    <td width="80" class="text_center time">${RESVTIME}</td>
+    <td width="80" class="text_center visitType">${VISITTYPE}</td>
+    <td width="80" class="text_center" >${RESVCOUNT}</td>
+    <td style="text-align:left;">${RESVMEMO}</td>
+</tr>
+</script>
+</head>
+<body>
+            <div id="Notice" class="clearfix">
+                <div class="history">                
+                    <div class="recent">
+                        <img src="img/Progress_1.png" alt=""> <p>내원 횟수 : <span class="revct">14</span>건</p>
+                        <p>예약취소 건수 : <span class="revCct">14</span>건</p>
+                        <p class="red">※ 빨간 글씨는 예약취소된 내역입니다.</p>
+                    </div>
+                    <table class="resev_list">
+                    <thead>
+                        <tr>
+                            <th width="100">예약일</th>
+                            <th width="80">예약시간</th>
+                            <th width="80">진료구분</th>
+                            <th width="80">예약차수</th>
+                            <th>예약메모</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    </table>
+                </div>
+
+                <div class="progress ChartHide">
+                    <div class="recent">
+                        <img src="img/Progress_1.png" alt=""> <p>내원 횟수 : <span class="count">14</span>건</p>
+                    </div>
+                    <table class="memo_list2">
+                    </table>
+                </div>
+                <div class="memoNote ChartHide">    
+                    <table class="memo_list2">
+                    </table> 
+                </div>
+                <div class="addressNote ChartHide">    
+                <textarea name="insertArea" id="" placeholder="메모를 입력하세요." cols="30" rows="10" class="insertArea" custID="" ></textarea>
+                <img src="img/btn_save.png" alt="" class="savememo">
+
+                    <table class="memo_list2">
+                    </table>
+                </div>
+                <div class="etc ChartHide">
+<!--                   <textarea name="" id="" placeholder="공지할 내용을 입력하세요." cols="30" rows="10"></textarea>
+                  <img src="img/btn_save.png" alt="">
+                  <img src="img/btn_cancel.png" alt=""> -->
+                  <ul class="memo_list">
+                  </ul>                  
+                </div>
+            </div>
+</body>
+</html> 
+<script>
+  var serverUrl =  "http://int.trustnhope.com:3114/inbody/",
+      cc04,
+      doctorList;
+
+$(function() {
+  loadConsultboard(true);
+var jqueryDatepickerOption = {
+    monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+    dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'],
+    showMonthAfterYear: true, 
+    yearSuffix: "년",
+    dateFormat: 'yy-mm-dd'
+};    
+    $( "#datepicker" ).datepicker(jqueryDatepickerOption);
+    $('td').on('click',function(){
+        var $parent = $(this).parents('tr');
+        if($parent.hasClass('pgSelect')){
+            $parent.removeClass('pgSelect');
+        }else{
+            $parent.addClass('pgSelect');
+        }
+    });  
+
+
+    // 메모저장
+    $(".savememo").on('click', function(e) {
+        if($('.insertArea').val() == '') return;
+        //e.preventDefault();
+
+        var custID = $('.insertArea').attr('custID') ;
+        var context = '#SCHEDULE_' + $('.insertArea').attr('custID');
+        var memotype = 3;
+        var memo = setMemo($('.insertArea').attr('custID'), memotype, $('.insertArea'));
+        if(memo.MEMO == "") return;
+        $('.insertArea').val('');
+        
+    var url = serverUrl + "Appmemosave.json?memo=" + JSON.stringify(memo);
+
+
+        hjson({
+            url: url,
+            type: "POST",
+            dataType: "jsonp",
+            jsonp: "callback",
+            timeout: 15000,
+            crossDomain:true,
+            cache:false,
+            success: function(data) {                    
+                for(var i = 0; i < data.length; i++) {
+                    $("#AddressListTmpl").tmpl(data[i]).prependTo($(".memo_list2 tbody"));
+                }
+            }
+        });
+    });
+
+
+
+});
+
+
+function loadConsultboard(init) {
+    var params = getUrlParams();
+
+    var url = serverUrl + "getConsultation.json?custID=" + params.custID + '&peDocmemo=' + params.peDocmemo;
+
+    $.ajax({
+        url: url,
+        type: "POST",
+        dataType: "jsonp",
+        jsonp: "callback",
+        timeout: 15000,
+          crossDomain:true,
+          cache:false,
+        success: function (jsonData) {
+            var data = jsonData.object;
+            doctorList = JSON.parse(data.configCode.doctorList);
+            cc04 = JSON.parse(data.configCode.cc04);
+
+            if(data.resvlist.length === 0) {
+                $('<li class="emc">출력할 정보가 없습니다.</li>').appendTo('.tbody');
+            } else {
+                for (var i = 0; i < data.resvlist.length; i++) {
+                    $('#listTmpl').tmpl(data.resvlist[i]).appendTo('.resev_list tbody');
+                };      
+            }
+            
+            if(data.memoList1.length === 0) {
+                $('<li class="emc">출력할 정보가 없습니다.</li>').appendTo('.memoNote .memo_list2');
+            } else {
+                for (var i = 0; i < data.memoList1.length; i++) {
+                    $('#MemoListTmpl').tmpl(data.memoList1[i]).appendTo('.memoNote .memo_list2');
+                };
+            }
+
+            if(data.memoList3.length === 0) {
+                $('<li class="emc">출력할 정보가 없습니다.</li>').appendTo('.addressNote .memo_list2');
+            } else {
+                for (var i = 0; i < data.memoList3.length; i++) {
+                    $('#AddressListTmpl').tmpl(data.memoList3[i]).appendTo('.addressNote .memo_list2');
+                };
+            }
+
+            if(data.memoList4.length === 0) {
+                $('<li class="emc">출력할 정보가 없습니다.</li>').appendTo('.memo_list');
+            } else {
+                for (var i = 0; i < data.memoList4.length; i++) {
+                    $('#EtcListTmpl').tmpl(data.memoList4[i]).appendTo('.memo_list');
+                };              
+            }
+
+            if(data.progressNote.length === 0) {
+                $('<li class="emc">출력할 정보가 없습니다.</li>').appendTo('.progress .memo_list2');
+            } else {        
+                for (var i = 0; i < data.progressNote.length; i++) {
+                    $('#ProgressNoteTmpl').tmpl(data.progressNote[i]).appendTo('.progress .memo_list2');
+                };
+            }
+            $('.insertArea').attr('custID', params.custID);
+            $('.progress .count').text(data.progressNote.length);
+            $('.revCct').text(data.resvCount.CANCELCOUNT);
+            $('.revct').text(data.resvCount.RESVCOUNT);
+           SelectHistory();
+            showDetail();
+            formatList();
+
+            // if(init) {
+            //     parent.loadMask(false); 
+            //     parent.loadMask(false, true);
+            // }
+        },
+        error: function (xhr, option, error) {
+            if(init) {
+                // parent.loadMask(false, true);
+                // location.href = "index.html";
+            }
+            showMessage(ajaxRequestErrorMessage(xhr.status));
+        }       
+    });
+
+}    
+
+
+
+
+
+function formatList ($target) {
+    $('.date').each(function(){
+        if ($(this).text() !== '') {
+            var dateObj = getStrToDate($(this).text());
+            $(this).text(dateObj.format("yyyy-mm-dd") + " (" + getDayKr(dateObj.getDay()) + ")");
+        }
+    });    
+  $(".phone",$target).each(function() {
+    $(this).text(format_phone($(this).text()));
+  });
+  $(".gender",$target).each(function() {
+    $(this).text(format_gender($(this).text()));
+  });
+  $(".jn",$target).each(function() {
+    $(this).text(format_jn($(this).text()));
+  });
+  $(".totals",$target).each(function() {
+    $(this).text(commify($(this).text()));
+  });
+  $(".age",$target).each(function() {
+    $(this).text(format_age($(this).text()));
+  });
+  $(".comma",$target).each(function() {
+    $(this).text(commify($(this).text()));
+  });
+    $(".drname").each(function() {
+        $(this).text(getCodeByName(doctorList, "EMPLOYEEID", "EMPLNAME", $(this).text()));
+    });
+    $('.time').each(function(){
+        $(this).text(format_time($(this).text()));
+    });
+  $(".visitType",$target).each(function() {
+    $(this).text(getCodeByName(cc04, "CODE", "CONFIG", $(this).text()));
+  });
+  // $(".recent",$target).each(function() {
+  //   if($(this).text() != ''){
+  //     $(this).text("최근 " + format_stdate($(this).text()));
+  //   }
+  // });  
+}
+
+function showDetail(){
+    $('.pgList').off().on('click',function(){
+        $(this).find('ul').hasClass('detail') ? $(this).find('ul').removeClass('detail') : $(this).find('ul').addClass('detail'); 
+    });
+}
+
+function SelectHistory(){
+    var officeWeekHours = [8,18];
+
+    $('.ChartHis').off().on('click',function(){
+        $('.ChartHis').each(function(){
+            $(this).removeClass('selectTd');
+        });
+        $(this).addClass('selectTd');
+
+        var scheduleID =$(this).attr('scheduleID');
+        parent.ModifyHistory(scheduleID,officeWeekHours);
+    });
+}
+function setMemo(custID, mtype, $tarObj)
+{
+    var context = "#SCHEDULE_"+custID;
+    var memo = {};
+    var callType = 0;
+    memo.MEMO = $tarObj.val();
+    memo.MEMODATE = getCalDate();
+    memo.CUSTOMERID = custID;
+    memo.MEMOTYPE = mtype;
+    memo.CALLTYPE = callType;
+
+    return memo;
+}
+</script>  

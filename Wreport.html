@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" name='viewport' content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <title>매출집계</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<style>
+    body{background: #394264; padding: 8px; min-height: 668px;}
+    .numfixed{width: 45px;}
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/jquery.tmpl.min.js"></script>
+<script src="js/jquery.touchSwipe.min.js"></script>
+<script id="AreaListTmpl" type="text/x-jquery-tmpl">
+            <tr>
+            <td style="text-align:center;">${NO}</td>
+            <td style="text-align:center;">${TITLE} (${CUSTCOUNT})</td>
+            <td class="numberorder">${NONINSAMT}</td>
+            <td class="numberorder">${LIABILITYAMT}</td>
+            <td class="numberorder">${CLAIMAMT}</td>
+            <td class="numberorder">${CHARGEAMT}</td>
+            <td class="numberorder">${ORDERAMT}</td>
+            <td class="numfixed">${PERCENT}%</td>
+          </tr>
+</script>
+</head>
+<body>
+  <div id="wrap_report">
+<div class="report_left W">
+    <img src="img/Progress_1.png" alt=""> <p>매출집계 (발생된 진료비 기준, 환불 포함)</p>
+    <table class="ordersum">
+       <tr>    
+       <th rowspan="4" width="150">급여진료비</th>
+       </tr>
+       <tr>
+       <th class="borderT"  width="150">본인부담금</th>
+       <td class="borderT numberorder" id="ordAmt_LIABILITYAMT">0</td>
+       <td class="borderT numberorder numfixed" id="ordRate_LIABILITYAMT">0.00%</td>
+       </tr>
+       <tr>
+       <th width="150">보험청구액</th>
+       <td class="numberorder" id="ordAmt_CLAIMAMT">0</td>
+       <td class="numberorder numfixed" id="ordRate_CLAIMAMT">0.00%</td>
+       </tr>
+       <tr>
+       <th width="150">급여진료비합</th>
+       <td class="numberorder" id="ordAmt_INSTOTAL">0</td>
+       <td class="numberorder numfixed" id="ordRate_INSTOTAL">0.00%</td>
+       </tr>
+       <tr>
+       <th width="150">비급여진료비</th> 
+       <th></th>
+       <td class="numberorder" id="ordAmt_NONINSAMT">0</td>
+       <td class="numberorder numfixed" id="ordRate_NONINSAMT">0.00%</td>
+       </tr>
+       <tr>
+       <th width="150" class="line3">본인부담금 합계<br>(수납할금액)</th>
+       <th></th>
+       <td class="numberorder" id="ordAmt_CHARGETOTAL">0</td>
+       <td class="numberorder numfixed" id="ordRate_CHARGETOTAL">0.00%</td>
+       </tr>
+       <tr>
+       <th width="150">총진료비</th>
+       <th></th>
+       <td class="numberorder" id="ordAmt_ORDERAMT">0</td>
+       <td class="numberorder numfixed" id="ordRate_ORDERAMT">0.00%</td>
+       </tr>
+        </table>
+</div>
+        <div class="report_right">
+            <p><img src="img/Progress_1.png" alt="">수납한 금액 집계(미수환불처리 포함)</p>
+            <table class="paymentsum">
+                <tr><th rowspan="4"  width="150">진료비</th></tr>
+                <tr><th class="borderT" width="150">현금(현금영수증)</th>
+                      <td class="borderT numberorder" id="payAmt_M01">0</td>
+                      <td class="borderT numberorder" id="payRate_M01">0.00%</td>
+                </tr>
+                <tr><th width="150">통장</th>
+                       <td class="numberorder" id="payRate_M01">0</td>
+                       <td class="numberorder numfixed" id="payRate_M01">0.00%</td>
+                </tr>
+                <tr><th  width="150">통장(현금영수증)</th>
+                       <td class="numberorder" id="payAmt_M03">0</td>
+                       <td class="numberorder numfixed" id="payRate_M03">0.00%</td>
+                </tr>
+                <tr><th  width="150">카드</th>
+                       <th  width="150">현금합계</th>
+                       <td class="numberorder" id="payAmt_CXX">0</td>
+                       <td class="numberorder numfixed" id="payRate_CXX">0.00%</td>
+                </tr>
+                <tr><th  width="150">미분류(환불금 미수처리)</th>
+                       <th  width="150"></th>
+                       <td class="numberorder" id="payAmt_X00">0</td>
+                       <td class="numberorder numfixed" id="payRate_X00">0.00%</td>
+                </tr>
+                <tr><th width="150" class="line3">수납금액합계<br>(미수처리금액 및<br> 환불처리금액포함)</th>
+                       <th  width="150"></th>
+                       <td class="numberorder" id="payAmt_CHARGEAMT">0</td>
+                       <td class="numberorder numfixed" id="payRate_CHARGEAMT">0.00%</td>
+                </tr>
+                <tr><th  width="150">＊환불금액</th>
+                       <th  width="150"></th>
+                       <td class="numberorder" id="payAmt_RXX">0</td>
+                       <td class="numberorder numfixed" id="payRate_RXX">0.00%</td>
+                </tr>
+                <tr><th  width="150">＊남은 미수액</th>
+                       <th></th>
+                       <td class="numberorder" id=""></td>
+                       <td class="numberorder numfixed" id="payAmt_UNPAIDAMT"></td>
+                 </tr>
+            </table>
+        </div>
+<div class="report_bottom">
+    <p><img src="img/Progress_1.png" alt="">매출집계 (발생된 진료비 기준, 환불포함) <span class="blue">분야별 매출 집계 (발생된 진료비 - 환불금액, 수납한 금액 기준이 아님)</span></p>
+    <table class="summarysum">
+        <thead>
+            <tr>
+                <th width="30">No.</th>
+                <th>분야</th>
+                <th width="120">비급여</th>
+                <th width="120">급여본부금</th>
+                <th width="120">급여청구액</th>
+                <th width="120">본부금합<br>수납할금액</th>
+                <th width="120">총매출액</th>
+                <th>매출비율(%)</th>
+            </tr>
+        </thead>
+        <tbody>
+                <td width="30">1</td>
+                <td width="120">상담</td>
+                <td width="120">0</td>
+                <td width="120">0</td>
+                <td width="120">0</td>
+                <td width="120">0</td>
+                <td width="120">0</td>
+                <td>0.00%</td>                        
+        </tbody>
+    </table>
+</div>
+</div>
+</body>
+</html> 
+<script src="js/report.js"></script>

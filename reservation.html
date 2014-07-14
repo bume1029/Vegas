@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" name='viewport' content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <title>예약내역</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/jquery-ui-1.10.4.css">
+<style>
+    body{background: #394264; padding: 8px; min-height: 668px;}
+</style>
+<script src="js/jquery-1.10.2.js"></script>
+<script src="js/jquery-ui-1.10.4.min.js"></script>
+<script type="text/javascript" src="js/date.format.js"></script>
+<script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+<script src="js/lib.js"></script>
+<script id="ResvListTmpl" type="text/x-jquery-tmpl">
+<tr class="appHis schTime_${RESVTIME} status_${SCHEDULESTATUS}" scheduleID="${SCHEDULEID}" data-date="${RESVTIME}">
+    <td width="80" class="text_center time">${RESVTIME}</td>
+    <td width="105" class="text_center svcarea">${SVCAREA}</td>
+    <td width="90" class="text_center">${CUSTNAME}(<span class="gender">${CUSTGENDER}</span>/<span class="age">${CUSTJN}</span>)</td>
+    <td width="100" class="text_center visitType">${VISITTYPE}</td>
+    <td width="100" class="text_center condition1">${CONDITION1}</td>
+    <td width="80" class="text_center scheduledr">${SCHDOCTOR}</td>
+</tr>
+</script>
+</head>
+<body>
+        <div class="wrap_right fl_L clearfix">
+            <div id="Notice" class="clearfix mtz">
+                <div class="recent summaryCt">
+                    <img src="img/Progress_1.png" alt=""> <p>예약 총 횟수 : <span class="appct">14</span>건</p>
+                    <p>예약취소 건수 : <span class="cancelct">14</span>건</p>
+                    <p class="red">※ 빨간 글씨는 예약취소된 내역입니다.</p>
+                </div>
+                <table class="resev_head">
+                <thead>
+                    <tr>
+                        <th width="100">시간</th>
+                        <th width="80">예약시간</th>
+                        <th>시술</th>
+                        <th width="90">이름</th>
+                        <th width="100">진료구분</th>
+                        <th width="100">진료분야</th>
+                        <th width="80">담당의</th>
+                    </tr>
+                </thead>
+                </table>
+                <table class="resev_list">
+                <tbody>
+                    <!-- <tr>
+                        <td class="text_center">09:00</td>
+                        <td class="text_center">09:00</td>
+                        <td class="text_center">보톡스</td>
+                        <td class="text_center">조준현(남/33)</td>
+                        <td class="text_center">신환상담</td>
+                        <td class="text_center">슬리밍</td>
+                        <td class="text_center">박정호</td>
+                    </tr> --> 
+                </tbody>
+                </table>
+            </div>
+        </div>    
+<div class="loadMaskLayer">
+  <div>
+    <img src="img/ajax-loader2.gif" width="35" height="35"> 리스트 불러오기 
+  </div>
+</div></body>
+</html> 
+<script>
+
+var openHourList = [];
+var serverUrl =  "http://int.trustnhope.com:3114/inbody/";
+var officeWeekHours = [8,18],
+    rowMinTerm = 30,     // 예약노트 분 간격
+    cc04,
+    cc05,
+    cc06,
+    doctorList;
+
+$(function() {
+    $( "#datepicker" ).datepicker(jqueryDatepickerOption);
+    var url = getUrlParams();
+    SetTableRow(true,url.srDate);
+});
+
+function SetTableRow (init, srDate)
+{
+    var url = serverUrl + "Reservation.json?startDate=" + srDate + "&endDate=" + srDate;
+
+    $.ajax({
+        url: url,
+        type: "POST",
+        dataType: "jsonp",
+        jsonp: "callback",
+        timeout: 15000,
+          crossDomain:true,
+          cache:false,
+        success: function (jsonData) {
+            var data = jsonData.object;
+            openHourList = data.openHourList;
+            var srDate = data.srDate;
+            cc04 = JSON.parse(data.configCode.cc04);
+            cc05 = JSON.parse(data.configCode.cc05);
+            cc06 = JSON.parse(data.configCode.cc06);
+            doctorList = JSON.parse(data.configCode.doctorList);
+            setOfficeHours(openHourList, srDate);         
+            for (var i = 0; i < data.scheduleList.length; i++) {
+                resvTime = data.scheduleList[i].RESVTIME || data.scheduleList[i].SCHEDULETIME;
+                schMin = "00";
+                if(resvTime.length > 0) {
+                    if(resvTime.length > 4) resvTime = resvTime.substr(0,4);
+                    var resvMin = parseInt(resvTime.substr(2,2), 10);
+                    schMin = resvTime.substr(0,2) + ":" + resvTime.substr(2,2);
+                    resvTime = resvTime.substr(0,2) + (100 + resvMin - resvMin % rowMinTerm).toString().substr(1);
+                    $('#ResvListTmpl').tmpl(data.scheduleList[i]).appendTo('.resev_list tbody td.' + resvTime);  
+                }                
+            };
+
+            $('.appct').text($('.appHis').length - $('.status_0').length);
+            $('.cancelct').text($('.status_0').length);
+            SelectHistory();
+            formatList();     
+        },
+        error: function (xhr, option, error) {
+            if(init) {
+                // parent.loadMask(false, true);
+                parent.OnLoad();
+            }
+            showMessage(ajaxRequestErrorMessage(xhr.status));
+        }       
+    });
+
+
+}
+
+
+function setOfficeHours(openHourList, srDate)
+{
+    if(openHourList == null || openHourList.length == 0 || srDate == "") return;
+    var timeObj = searchObjectList(openHourList, 'WEEKDAY', getStrToDate(srDate).getDay());
+    officeHours = timeObj != null ? [parseInt(timeObj.OPENTIME.substr(0,2), 10) || 8, parseInt(timeObj.CLOSETIME.substr(0,2), 10) || 18] : [8,18];
+    officeMin = timeObj != null ? [parseInt(timeObj.OPENTIME.substr(2,2), 10) || 0, parseInt(timeObj.CLOSETIME.substr(2,2), 10) || 0] : [0,0];
+    
+    var term = [];
+    for(var i=0; i<openHourList.length; i++) {
+        if(openHourList[i].OPENTIME == null || openHourList[i].CLOSETIME == null) continue;
+        var openTime = parseInt(openHourList[i].OPENTIME.substr(0,2), 10);
+        var closeTime = parseInt(openHourList[i].CLOSETIME.substr(0,2), 10);
+        
+        if(term[0] == null) term[0] = openTime;
+        if(term[1] == null) term[1] = closeTime;
+        if(term[0] > openTime) term[0] = openTime;
+        if(term[1] < closeTime) term[1] = closeTime;
+    }
+    
+    officeWeekHours = term;
+
+    tableInit(officeWeekHours);
+    return officeWeekHours;
+}
+
+// 예약노트 초기화
+function tableInit(officeWeekHours)
+{
+    
+    var tableRow = "";
+    var costID = "";
+    
+    var startDate = new Date();
+    var startMin = 0;
+    var endDate = new Date();
+    
+    startDate.setHours(officeHours[0]);
+    startDate.setMinutes(0);
+    endDate.setHours(officeHours[1]);
+    endDate.setMinutes(0);
+    
+    var prnRow = "";
+    var cellID = "";
+    var subWid = 0;
+    var firstRowFlag = true;
+    var p = 0;
+
+    while(startDate <= endDate) {
+        prnTime = startDate.format("TT hh:MM");
+        resvTime = startDate.format("hhMM");
+        cellID = startDate.format("HHMM");
+        startDate.setMinutes(startDate.getMinutes() + rowMinTerm);
+        
+        tableRow = '<tr><td width="100" rowCode="' + cellID + '" class="rowHeader resvFirstCell text_center">' + prnTime + '</td><td class="list '+cellID+'"></td>';
+        tableRow += "</tr>\r\n";
+        $(".resev_list tbody").append(tableRow);
+        firstRowFlag = false;
+    }
+    
+}
+
+function formatList(){
+    $('.time').each(function(){
+        $(this).text(format_time($(this).text()));
+    });
+    $('.age').each(function(){
+        $(this).text(format_age($(this).text()));
+    });
+    $('.gender').each(function(){
+        $(this).text(format_gender($(this).text()));
+    });
+    $(".visitType").each(function() {
+        $(this).text(getCodeByName(cc04, "CODE", "CONFIG", $(this).text()));
+    });
+    $(".svcarea").each(function() {
+        $(this).text(getCodeByName(cc05, "CODE", "CONFIG", $(this).text()));
+    });
+    $(".condition1").each(function() {
+        $(this).text(getCodeByName(cc06, "CODE", "CONFIG", $(this).text()));
+    });
+    $(".scheduledr").each(function() {
+        $(this).text(getCodeByName(doctorList, "EMPLOYEEID", "EMPLNAME", $(this).text()));
+    });
+
+}
+
+function SelectHistory(){
+    $('.appHis').off().on('click',function(){
+        $('.appHis').each(function(){
+            $(this).removeClass('selectTd');
+        });
+        $(this).addClass('selectTd');
+
+        var scheduleID =$(this).attr('scheduleID');
+        parent.ModifyHistory(scheduleID,officeWeekHours);
+    });
+}
+
+</script>  

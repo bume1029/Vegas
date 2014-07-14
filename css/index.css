@@ -1,0 +1,43 @@
+@charset "utf-8";
+
+@font-face {
+    font-family:'나눔고딕';
+    src:local('☆'),url('../NanumGothic.ttf')format("truetype");
+}
+html, body, ul, dd, dt, dl {margin:0;padding:0;}
+img {border:none;}
+li {list-style:none;}
+body{font: 12px/1 '나눔고딕'; width: 1024px; height: 740px; position: relative; }
+/*body {width:768px;height:1004px;position:relative;background-color:#ffffff;font-family:'나눔고딕';background-image:url(../img/bg.png);background-repeat:no-repeat;}*/
+input,textarea {outline:none;border:none;}
+/*table {border-collapse:collapse;}*/
+#Wrap{padding: 0;margin: 0;}
+.btnlogin {top:443px;background-image:url(../img/btnlogin.png); background-repeat:no-repeat;}
+.btnlogin:active {top:443px;background-image:url(../img/btnlogin_.png); background-repeat:no-repeat;}
+.idbox, .pwbox, .btnlogin {width:302px;height:65px;position:absolute;left:366px;}
+.logo{position: absolute; top: 8px; left: 8px;}
+
+.idbox {background-image:url(../img/id.png);top:273px;}
+.pwbox {background-image:url(../img/pw.png);top:346px;}
+
+.logininput {width:210px;height:30px;margin:6px 0 0 58px;font-size:18px; background: none;}
+
+.setupbtn {background-image:url(../img/btnsetting.png);width:93px;height:96px;margin-left:880px;}
+
+.setupbtn1 {background-image:url(../img/btnsetting_.png);width:93px;height:96px;position:absolute;top:0;left:880px;display:none;}
+
+#glayLayer {display:none;position:fixed;left:0;top:0;height:100%;width:100%;background:black;filter:alpha(opacity=60);opacity: 0.5;}
+#SetupLayer {display:none;width:633px;height:454px;position:absolute;top:216px;left:210px;background-image:url(../img/popupbg.png);}
+#SetupLayer .title {font-weight:bold;color:#696969;font-size:18px;border-bottom:2px solid #696969;padding-bottom:4px;margin:28px 25px 28px 26px;}
+
+#SetupLayer .selectServer {font-size: 16px; margin:80px 0 0 110px; width:406px; padding-bottom:10px;}
+#SetupLayer #setHanchart, #SetupLayer #setVegas {margin:10px 0 0 100px; width:410px; padding:15px; border:solid 1px #CFCFCF; border-radius:6px;}
+#SetupLayer .setupText {height:25px; font-size: 14px;}
+#SetupLayer .descriptionText {width:406px;font-size:12px;}
+#SetupLayer .addrbox {width:406px;height:45px;background-image:url(../img/setupinp.png);margin:10px 0;}
+.IpAddr {width:370px;height:20px;background-color:#f2f2f2;font-size:18px;color:#888888;margin:13px 0 0 10px;}
+.savebtn {width:99px;height:49px;font-size:16px;font-weight:bold;text-align:center;background-image:url(../img/savebtn.png);margin:20px 0 0 430px;}
+.savebtn span {display:inline-block;margin-top:15px;color:#4a4a4a;}
+
+/*#setVegas {display:none;}*/
+.radioBlock {margin-right:20px; cursor:pointer;}
